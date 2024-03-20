@@ -1,0 +1,29 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-3xl mx-auto py-8">
+        <h1 class="text-3xl font-bold text-center mb-4">Weather Dashboard</h1>
+        {% if error %}
+            <p class="text-red-500 text-center mb-4">{{ error }}</p>
+        {% endif %}
+        <form action="{% url 'current_weather' %}" method="get" class="mb-4">
+            {% csrf_token %}
+            <label for="zip_code_single" class="block mb-2">Enter Zip Code:</label>
+            <input type="text" id="zip_code_single" name="zip_code" placeholder="Enter Zip Code" pattern="\d{5,6}" title="Enter a 5 or 6-digit zip code" required class="p-2 border border-gray-300 focus:outline-none focus:ring focus:border-blue-500">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md ml-2 hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-500">Get Current Weather</button>
+        </form>
+        {% if weather_data %}
+            <div class="bg-white rounded-md p-4 shadow-md">
+                <h2 class="text-lg font-bold">{{ weather_data.name }}</h2>
+                <p class="text-gray-600">Temperature: {{ weather_data }} °F</p>
+                <img src="/images/{{ weather_data.weather.0.icon }}.png" alt="{{ weather_data.weather.0.description }}" class="mt-4 mx-auto">
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
