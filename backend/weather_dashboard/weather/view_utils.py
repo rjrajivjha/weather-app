@@ -8,4 +8,4 @@ def get_lat_long(zip_code):
     if response.status_code == 200:
         return [data["lat"], data["lon"], data["name"]]
     else:
-        return [None, None]
+        return [None, None, None]

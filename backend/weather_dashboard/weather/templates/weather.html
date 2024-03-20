@@ -19,8 +19,9 @@
         </form>
         {% if weather_data %}
             <div class="bg-white rounded-md p-4 shadow-md">
-                <h2 class="text-lg font-bold">{{ weather_data.name }}</h2>
+                <h2 class="text-lg font-bold">{{ city }}</h2>
                 <p class="text-gray-600">Temperature: {{ weather_data }} °F</p>
+                
                 <img src="/images/{{ weather_data.weather.0.icon }}.png" alt="{{ weather_data.weather.0.description }}" class="mt-4 mx-auto">
             </div>
         {% endif %}
