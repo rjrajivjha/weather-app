@@ -7,6 +7,29 @@
 </head>
 <body class="bg-gray-100">
     <div class="max-w-3xl mx-auto py-8">
+        <div id="tickerContainer">
+            {% include 'ticker.html' %}
+        </div>
+        <div class="max-w-3xl mx-auto py-8">
+            <h2 class="text-xl font-bold mb-4">Select cities for your ticker:</h2>
+            <form id="cityForm" class="mb-4">
+                <div class="flex flex-wrap gap-4">
+                    <div class="w-full sm:w-auto">
+                        <input type="text" id="city1" name="city1"  placeholder="Enter City Name" class="p-2 border border-gray-300 focus:outline-none focus:ring focus:border-blue-500" required>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <input type="text" id="city2" name="city2"  placeholder="Enter City Name" class="p-2 border border-gray-300 focus:outline-none focus:ring focus:border-blue-500" required>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <input type="text" id="city3" name="city3" placeholder="Enter City Name" class="p-2 border border-gray-300 focus:outline-none focus:ring focus:border-blue-500" required>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md ml-2 hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-500">Save Cities</button>
+                    </div>
+                </div>
+                
+            </form>
+        </div>
         <h1 class="text-3xl font-bold text-center mb-4">Weather Dashboard</h1>
         {% if error %}
             <p class="text-red-500 text-center mb-4">{{ error }}</p>
@@ -27,4 +50,79 @@
         {% endif %}
     </div>
 </body>
+<script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedCities = JSON.parse(localStorage.getItem('weather_data_list'));
+
+            if (savedCities && savedCities.length === 3) {
+                document.getElementById('city1').value = savedCities[0]["city"];
+                document.getElementById('city2').value = savedCities[1]["city"];
+                document.getElementById('city3').value = savedCities[2]["city"];
+            }
+            else {
+                document.getElementById('tickerText').innerHTML = 'Please select cities to be tracked constantly';
+            }
+        });
+
+        document.getElementById('cityForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const cities = [
+                document.getElementById('city1').value.trim(),
+                document.getElementById('city2').value.trim(),
+                document.getElementById('city3').value.trim(),
+            ];
+
+            const savedCities = JSON.parse(localStorage.getItem('weather_data_list'));
+            const citiesInLocalStorage = savedCities ? savedCities.filter(item => cities.includes(item.city)) : [];
+            const missingCities = cities.filter(city => !citiesInLocalStorage.map(item => item.city).includes(city));
+            if (citiesInLocalStorage.length === 3) {
+                updateTicker(savedCities);
+            } else {
+                
+                const apiUrl = `{% url "get_weather_for_ticker" %}?cities=${missingCities.join(',')}`;
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        const currentTime = new Date().getTime();
+                        const updatedCities = citiesInLocalStorage.concat(data.weather_data_list);
+                        localStorage.setItem('weather_data_time', currentTime);
+                        localStorage.setItem('weather_data_list', JSON.stringify(updatedCities));
+                        updateTicker(updatedCities);
+                    })
+                    .catch(error => console.error('Error fetching weather data from API:', error));
+            }
+        });
+
+        function fetchWeatherFromAPI() {
+            fetch('{% url "get_weather_for_ticker" %}')
+                .then(response => response.json())
+                .then(data => {
+                    const currentTime = new Date().getTime();
+                    localStorage.setItem('weather_data_time', currentTime);
+                    localStorage.setItem('weather_data_list', JSON.stringify(data.weather_data_list));
+                    updateTicker(data.weather_data_list);
+                })
+                .catch(error => console.error('Error fetching weather data from API:', error));
+        }
+
+        function updateTicker(weatherDataList) {
+            const tickerText = document.getElementById('tickerText');
+            tickerText.innerHTML = weatherDataList.map(item => `${item.city}: ${item.temp}°F (${item.description}) | `).join('');
+        }
+
+        function fetchWeatherForTicker() {
+            const cachedTime = parseInt(localStorage.getItem('weather_data_time'), 10);
+            const currentTime = new Date().getTime();
+            const ttl = 3600000; 
+
+            if (!cachedTime || (currentTime - cachedTime > ttl)) {
+                fetchWeatherFromAPI();
+            } else {
+                const cachedWeatherDataList = JSON.parse(localStorage.getItem('weather_data_list'));
+                updateTicker(cachedWeatherDataList);
+            }
+        }
+        setInterval(fetchWeatherForTicker, 30000000);
+        fetchWeatherForTicker();
+</script>
 </html>
